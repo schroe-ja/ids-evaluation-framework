@@ -44,7 +44,7 @@ A comprehensive, modular, and configurable framework for evaluating Machine Lear
 
 ### Prerequisites
 
-- Python 3.13+
+- Python 3.14+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or pip
 
 ### Python Installation
