@@ -3,7 +3,6 @@ import subprocess
 import sys
 import unittest
 
-
 class TestSetup(unittest.TestCase):
     def test_numpy_import(self):
         numpy_spec = importlib.util.find_spec("numpy")
@@ -22,6 +21,3 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("IDS-EVAL Version", proc.stdout)
 
-
-if __name__ == "__main__":
-    unittest.main()

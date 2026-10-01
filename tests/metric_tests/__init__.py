@@ -1,0 +1,1 @@
+from .test_static_metrics import *

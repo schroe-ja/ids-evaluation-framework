@@ -1,4 +1,4 @@
-![Python](https://img.shields.io/badge/python-3.14%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.13%2B-blue?logo=python&logoColor=white)
 # IDS Evaluation Framework
 
 A comprehensive, modular, and configurable framework for evaluating Machine Learning-based Intrusion Detection Systems (IDS).
@@ -13,9 +13,6 @@ A comprehensive, modular, and configurable framework for evaluating Machine Lear
     - [Native Installation](#native-installation)
     - [Docker Installation](#docker-installation)
   - [Quick Start](#quick-start)
-    - [1. Create a Configuration File](#1-create-a-configuration-file)
-    - [2. Prepare Your Data](#2-prepare-your-data)
-    - [3. Run Evaluation](#3-run-evaluation)
   - [Usage](#usage)
     - [CLI Commands](#cli-commands)
     - [Evaluation Flags](#evaluation-flags)
@@ -44,7 +41,7 @@ A comprehensive, modular, and configurable framework for evaluating Machine Lear
 
 ### Prerequisites
 
-- Python 3.14+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or pip
 
 ### Python Installation
@@ -78,8 +75,15 @@ docker compose run --rm ids-eval version
 The image is built locally from the provided `Dockerfile`.
 
 ## Quick Start
+1. Run Tests
+  
+Run all tests in the project's root:
 
-### 1. Create a Configuration File
+```bash
+uv run python -m tests.test
+```
+
+3. Create a Configuration File
 
 Copy the example configuration and adjust it to your needs:
 
@@ -87,7 +91,7 @@ Copy the example configuration and adjust it to your needs:
 cp examples/run_config/example.config.yml examples/run_config/my_config.yml
 ```
 
-### 2. Prepare Your Data
+2. Prepare Your Data
 
 Run the data preparation pipeline:
 
@@ -95,7 +99,7 @@ Run the data preparation pipeline:
 uv run ids-eval dataset <run_config>
 ```
 
-### 3. Run Evaluation
+3. Run Evaluation
 
 Execute the evaluation pipeline:
 
