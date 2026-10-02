@@ -75,15 +75,7 @@ docker compose run --rm ids-eval version
 The image is built locally from the provided `Dockerfile`.
 
 ## Quick Start
-1. Run Tests
-  
-Run all tests in the project's root:
-
-```bash
-uv run python -m tests.test
-```
-
-3. Create a Configuration File
+1. Create a Configuration File
 
 Copy the example configuration and adjust it to your needs:
 
@@ -198,7 +190,7 @@ uv run pytest          # run all tests
 make test              # equivalent target
 ```
 
-`tests/test_metrics.py` contains two tests that verify the mathematical
+`tests/metrics_tests` contains tests that verify the mathematical
 correctness of two static metrics:
 
 | Test | Checks |
@@ -206,11 +198,13 @@ correctness of two static metrics:
 | `test_pr_auc_average_precision` | PR-AUC (Average Precision) against a known reference value |
 | `test_robustness_index_normalized_area` | Robustness Index equals the normalized area under the accuracy–perturbation curve |
 
-Run a single test:
+`tests/setup_tests` contains tests that verfiy the correctness of the framework's infrastructure:
 
-```bash
-uv run pytest tests/test_metrics.py -k pr_auc
-```
+| Test | Checks |
+|------|--------|
+| `test_numpy_import` | Checks if `numpy` is installed and usable |
+| `test_package_import` | Proofs that `srd/ids_eval` is importable |
+| `test_cli_version` | Use module invocation to avoid relying on entry point installation in the environment |
 
 # Additional Information
 
