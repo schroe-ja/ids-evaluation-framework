@@ -208,7 +208,7 @@ class DatasetSplitter:
 
         filtered_datasets = [df[result_columns] for df in datasets]
 
-        dataset_results: List[Split] = []
+        results: List[Split] = []
         for i, df in enumerate(filtered_datasets):
             if target_column not in df.columns:
                 self.logger.error(f"Target column '{target_column}' not found in dataset index {i}")
@@ -225,7 +225,7 @@ class DatasetSplitter:
                 stratify=y,  # Stratify to maintain class distribution
             )
 
-            dataset_results.append((X_train, X_test, y_train, y_test))
+            results.append((X_train, X_test, y_train, y_test))
 
             # Record metadata for this dataset's split
             self.metadata["steps"].append(
@@ -241,10 +241,10 @@ class DatasetSplitter:
             )
 
         self.logger.info(
-            f"Cross-dataset split completed for {len(dataset_results)} datasets with test_size={test_size}."
+            f"Cross-dataset split completed for {len(results)} datasets with test_size={test_size}."
         )
 
-        return dataset_results
+        return results
 
     def _split_benign_train(self, datasets: list[pd.DataFrame]) -> List[Split]:
         """
@@ -368,7 +368,7 @@ class DatasetSplitter:
         filtered_datasets = [df[result_columns] for df in datasets]
 
         # --- Per-dataset benign-train split (mirrors _split_benign_train) ---
-        dataset_results: List[Split] = []
+        results: List[Split] = []
         for i, df in enumerate(filtered_datasets):
             if target_column not in df.columns:
                 self.logger.error(f"Target column '{target_column}' not found in dataset index {i}")
@@ -412,7 +412,7 @@ class DatasetSplitter:
             X_test = pd.concat([X_benign_test, X_attack], ignore_index=True, copy=False)
             y_test = pd.concat([y_benign_test, y_attack], ignore_index=True, copy=False)
 
-            dataset_results.append((X_train, X_test, y_train, y_test))
+            results.append((X_train, X_test, y_train, y_test))
 
             # Record metadata for this dataset's split
             self.metadata["steps"].append(
@@ -441,8 +441,8 @@ class DatasetSplitter:
             )
 
         self.logger.info(
-            f"Cross-dataset-benign split completed for {len(dataset_results)} datasets with test_size={test_size}. "
+            f"Cross-dataset-benign split completed for {len(results)} datasets with test_size={test_size}. "
             f"Training sets contain only benign samples (label={benign_label})."
         )
 
-        return dataset_results
+        return results

@@ -12,7 +12,7 @@ from ids_eval.enumeration.feature_selection_method import FeatureSelectionMethod
 from ids_eval.enumeration.internal_label import InternalLabel
 
 
-class FeatureSelector:
+class DatasetFeatureSelector:
     """Handles the selection of features from datasets based on configured methods."""
 
     def __init__(self, config: RunConfig):
@@ -21,8 +21,12 @@ class FeatureSelector:
         self.logger = logging.getLogger(__name__)
 
     def select_features(self, datasets: list[pd.DataFrame]) -> list[pd.DataFrame]:
+        
         processed_datasets = []
+
         for i, dataset in enumerate(datasets):
+            X_train, X_test, y_train, y_test = dataset
+            
             if (
                 not self.config.data_manager.dataset[i].feature_selector
                 or self.config.data_manager.dataset[i].feature_selector.method == FeatureSelectionMethod.NONE

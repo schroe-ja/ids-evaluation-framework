@@ -8,7 +8,7 @@ from ids_eval.dataset_pipeline.dataset_analyser import DatasetAnalyser
 from ids_eval.dataset_pipeline.dataset_constructor import DatasetConstructor
 from ids_eval.dataset_pipeline.dataset_preprocessor import DatasetPreprocessor
 from ids_eval.dataset_pipeline.dataset_splitter import DatasetSplitter
-from ids_eval.dataset_pipeline.feature_selector import FeatureSelector
+from ids_eval.dataset_pipeline.dataset_feature_selector import DatasetFeatureSelector
 from ids_eval.dto.run_config import RunConfig
 from ids_eval.run_config_pipeline.config_manager import ConfigManager
 
@@ -31,29 +31,28 @@ class DataManager:
 
         self.logger.info(f"[DEBUG] after construct: {[len(d) for d in datasets]}")
 
-        # --- 2. Preprocessing ---
-        preprocessor = DatasetPreprocessor(self.config)
-        datasets = preprocessor.preprocess(datasets)
-        self.logger.info("Preprocessing complete.")
-        gc.collect()
-
-        self.logger.info(f"[DEBUG] after preprocess: {[len(d) for d in datasets]}")
-
-        # --- 3. Feature Selection ---
-        selector = FeatureSelector(self.config)
-        datasets = selector.select_features(datasets)
-        self.logger.info("Feature selection complete.")
-        gc.collect()
-
-
-        # --- 4. Data Splitting ---
+        # --- 2. Data Splitting ---
         splitter = DatasetSplitter(self.config)
         splits = splitter.split(datasets)
         self.logger.info("Data splitting complete.")
         gc.collect()
 
+        self.logger.info(f"[DEBUG] after splitting: {[len(d) for d in splits]}")
+
+        # --- 3. Feature Selection ---
+        selector = DatasetFeatureSelector(self.config)
+        datasets = selector.select_features(splits)
+        self.logger.info("Feature selection complete.")
+        gc.collect()
+
+        # --- 4. Preprocessing ---
+        preprocessor = DatasetPreprocessor(self.config)
+        datasets = preprocessor.preprocess(datasets)
+        self.logger.info("Preprocessing complete.")
+        gc.collect()
+        
         # --- 5. Save Processed Data ---
-        self._save_processed_data(splits)
+        self._save_processed_data(datasets)
 
         # --- 6. Analysis and Reporting ---
         analyser = DatasetAnalyser(self.config)
