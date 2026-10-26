@@ -25,7 +25,6 @@ class DatasetFeatureSelector:
         processed_datasets = []
 
         for i, dataset in enumerate(datasets):
-            X_train, X_test, y_train, y_test = dataset
             
             if (
                 not self.config.data_manager.dataset[i].feature_selector
@@ -61,16 +60,26 @@ class DatasetFeatureSelector:
     def _logistic_regression(self, dataset: pd.DataFrame, config_index: int) -> pd.DataFrame:
         self.logger.info("Using Logistic Regression to select features.")
 
-        # LogisticRegression is sensitive to NaNs and infinities
-        X = dataset.replace([np.inf, -np.inf], np.nan).dropna(axis=1)
-
-        y = dataset[InternalLabel.TARGET_LABEL.value]
-        # Ensure 'attack_category' and 'target_label' are not in X
-        X = X.drop(columns=InternalLabel.__values__(), errors="ignore")
-
         params = self.config.data_manager.dataset[config_index].feature_selector.params
         if params is None:
             raise ValueError("Parameters for logistic regression feature selection are not configured.")
+
+        X_train, X_test, y_train, y_test = dataset
+
+        X_train_new = (
+            X_train
+            .replace([np.inf, -np.inf], np.nan)
+            .dropna(axis=1) # LogisticRegression is sensitive to NaNs and infinities
+            .drop(columns=InternalLabel.__values__(), errors="ignore") # Ensure 'attack_category' and 'target_label' are not in X
+        )
+
+        y = y_train[InternalLabel.TARGET_LABEL.value]
+
+        X_test_new = (
+            X_test
+            .replace([np.inf, -np.inf], np.nan)
+            .reindex(columns=X_train_new.columns)
+        )
 
         logreg_model = LogisticRegression(
             C=params.C,
@@ -82,10 +91,21 @@ class DatasetFeatureSelector:
 
         selector = SelectFromModel(logreg_model, threshold=params.threshold)
 
-        selector.fit(X, y.values.ravel())
-
+        X_train_array = selector.fit_transform(X_train_new, y.values.ravel())
         selected_features_mask = selector.get_support()
-        selected_features = X.columns[selected_features_mask]
+        selected_features = X_train_new.columns[selected_features_mask]
+
+        X_train_selected = pd.DataFrame(
+            X_train_array,
+            columns=selected_features,
+            index=X_train_new.index,
+        )
+
+        X_test_selected = pd.DataFrame(
+            selector.transform(X_test_new),
+            columns=selected_features,
+            index=X_test_new.index,
+        )
 
         self.logger.info(f"Selected {len(selected_features)} features using Logistic Regression.")
         self.metadata["steps"].append(
@@ -97,9 +117,10 @@ class DatasetFeatureSelector:
         )
 
         # Reconstruct the DataFrame with selected features and original labels
-        selected_df = X[selected_features].copy()
+        selected_df = X_train_new[selected_features].copy()
         selected_df[InternalLabel.ATTACK_CATEGORY.value] = dataset[InternalLabel.ATTACK_CATEGORY.value]
         selected_df[InternalLabel.TARGET_LABEL.value] = dataset[InternalLabel.TARGET_LABEL.value]
+        
         return selected_df
 
     def _variance_threshold(self, dataset: pd.DataFrame, config_index: int) -> pd.DataFrame:
