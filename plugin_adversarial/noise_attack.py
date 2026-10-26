@@ -25,6 +25,10 @@ class NoiseAttack(AbstractAdversarialAttack):
     def _attack_deploy(
         self, model: Any | None, model_type: str, params: dict[str, Any], scaler: Any | None = None
     ) -> None:
+        """
+        Jmila and Ibn-Kheder (2022): Adversarial machine learning for network intrusion detection: A comparative study
+        https://www.sciencedirect.com/science/article/pii/S1389128622002146
+        """
         #robustness sweep overrides the perturbation magnitude via "eps"
         self.std = params.get("eps", params.get("std", 0.1))
         self.clip_min = params.get("clip_min", 0.0)

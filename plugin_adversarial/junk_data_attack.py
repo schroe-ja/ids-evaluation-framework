@@ -31,6 +31,14 @@ class JunkDataAttack(AbstractAdversarialAttack):
     def _attack_deploy(
         self, model: Any | None, model_type: str, params: dict[str, Any], scaler: Any | None = None
     ) -> None:
+        """
+        Pre-Print:
+        Goodfellow et al. (2015): Explaining and Harnessing Adversarial Examples
+        https://arxiv.org/abs/1412.6572
+
+        This attack is a baseline attack where simple noise is added. 
+        The theory behind it is mathematically explained in the FGSM paper.
+        """
         self.target_features = params.get("target_features", [])
         self.amount = params.get("amount", 1024.0)
         self.mode = params.get("mode", "constant")
