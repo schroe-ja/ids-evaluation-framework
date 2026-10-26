@@ -31,6 +31,11 @@ class FgsmAttack(AbstractAdversarialAttack):
         params: dict[str, Any],
         scaler: Any | None = None,
     ) -> None:
+        """
+        Pre-Print:
+        Goodfellow et al. (2015): Explaining and Harnessing Adversarial Examples
+        https://arxiv.org/abs/1412.6572
+        """
         from art.attacks.evasion import FastGradientMethod
 
         self.eps = params.get("eps", 0.1)
