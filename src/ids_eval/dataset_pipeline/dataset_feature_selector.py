@@ -39,15 +39,16 @@ class DatasetFeatureSelector:
             config = self.config.data_manager.dataset[i].feature_selector
             self.logger.info(f"Applying feature selection method '{config.method.value}' to dataset {i}.")
 
-            processed_dataset = dataset
+            #processed_dataset = dataset
+            X_train, X_test, y_train, y_test = dataset
 
             match config.method:
                 case FeatureSelectionMethod.LOGISTIC_REGRESSION:
-                    processed_dataset = self._logistic_regression(processed_dataset, i)
+                    processed_dataset = self._logistic_regression(X_train, X_test, y_train, y_test, i)
                 case FeatureSelectionMethod.VARIANCE_THRESHOLD:
-                    processed_dataset = self._variance_threshold(processed_dataset, i)
+                    processed_dataset = self._variance_threshold(X_train, X_test, y_train, y_test, i)
                 case FeatureSelectionMethod.CORRELATION_THRESHOLD:
-                    processed_dataset = self._correlation_threshold(processed_dataset, i)
+                    processed_dataset = self._correlation_threshold(X_train, X_test, y_train, y_test, i)
                 case _:
                     self.logger.error(f"Unsupported feature selection method: {config.method}")
                     raise ValueError(f"Unsupported feature selection method: {config.method}")
@@ -55,16 +56,15 @@ class DatasetFeatureSelector:
             processed_datasets.append(processed_dataset)
 
         self.logger.info("Feature selection completed for all datasets.")
+        
         return processed_datasets
 
-    def _logistic_regression(self, dataset: pd.DataFrame, config_index: int) -> pd.DataFrame:
+    def _logistic_regression(self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.DataSeries, y_test: pd.DataSeries, config_index: int) -> pd.DataFrame:
         self.logger.info("Using Logistic Regression to select features.")
 
         params = self.config.data_manager.dataset[config_index].feature_selector.params
         if params is None:
             raise ValueError("Parameters for logistic regression feature selection are not configured.")
-
-        X_train, X_test, y_train, y_test = dataset
 
         X_train_new = (
             X_train
@@ -126,11 +126,20 @@ class DatasetFeatureSelector:
         
         return selected_df
 
-    def _variance_threshold(self, dataset: pd.DataFrame, config_index: int) -> pd.DataFrame:
+    def _variance_threshold(self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.DataSeries, y_test: pd.DataSeries, config_index: int) -> pd.DataFrame:
         self.logger.info("Using Variance Threshold to select features.")
 
-        X = dataset.drop(columns=InternalLabel.__values__(), errors="ignore")
-        X = X.select_dtypes(include=np.number)  # Variance is only for numeric features
+        X_train_new = (
+            X_train
+            .drop(columns=InternalLabel.__values__(), errors="ignore")
+            .select_dtypes(include=np.number)  # Variance is only for numeric features
+        )
+
+        X_test_new = (
+            X_test
+            .drop(columns=InternalLabel.__values__(), errors="ignore")
+            .select_dtypes(include=np.number)  # Variance is only for numeric features
+        )
 
         params = self.config.data_manager.dataset[config_index].feature_selector.params
         threshold = 0.0
@@ -138,8 +147,19 @@ class DatasetFeatureSelector:
             threshold = float(params.threshold)
 
         selector = VarianceThreshold(threshold=threshold)
-        selector.fit(X)
-        selected_features = X.columns[selector.get_support()]
+        selected_features = X_train_new.columns[selector.get_support()]
+
+        X_train_selected = pd.DataFrame(
+            selector.fit_transform(X_train_new),
+            columns=selected_features,
+            index=X_train_new.index
+        )
+        
+        X_test_selected = pd.DataFrame(
+            selector.transform(X_test_new),
+            columns=selected_features,
+            index=X_test_new.index
+        )
 
         self.logger.info(
             f"Selected {len(selected_features)} features using VarianceThreshold with threshold={threshold}."
@@ -154,14 +174,16 @@ class DatasetFeatureSelector:
         )
 
         # Reconstruct the DataFrame
-        selected_df = X[selected_features].copy()
+        selected_df = pd.concat([X_train_selected, X_test_selected]).sort_index()
         # Add back non-numeric columns and labels that were dropped
         non_numeric_cols = dataset.select_dtypes(exclude=np.number).columns
         selected_df = pd.concat([selected_df, dataset[non_numeric_cols]], axis=1)
+
         return selected_df
 
-    def _correlation_threshold(self, dataset: pd.DataFrame, config_index: int) -> pd.DataFrame:
+    def _correlation_threshold(self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.DataSeries, y_test: pd.DataSeries, config_index: int) -> pd.DataFrame:
         self.logger.info("Using Correlation Threshold to select features.")
+
         y = dataset[InternalLabel.TARGET_LABEL.value]
         X = dataset.drop(columns=InternalLabel.__values__(), errors="ignore")
         X_numeric = X.select_dtypes(include=np.number)
@@ -189,4 +211,5 @@ class DatasetFeatureSelector:
         selected_df = X[selected_features].copy()
         selected_df[InternalLabel.ATTACK_CATEGORY.value] = dataset[InternalLabel.ATTACK_CATEGORY.value]
         selected_df[InternalLabel.TARGET_LABEL.value] = y
+
         return selected_df
