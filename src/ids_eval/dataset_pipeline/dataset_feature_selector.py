@@ -117,9 +117,12 @@ class DatasetFeatureSelector:
         )
 
         # Reconstruct the DataFrame with selected features and original labels
-        selected_df = X_train_new[selected_features].copy()
-        selected_df[InternalLabel.ATTACK_CATEGORY.value] = dataset[InternalLabel.ATTACK_CATEGORY.value]
-        selected_df[InternalLabel.TARGET_LABEL.value] = dataset[InternalLabel.TARGET_LABEL.value]
+        selected_df = pd.concat([X_train_selected, X_test_selected]).sort_index()
+        target = pd.concat([y_train, y_test]).reindex(selected_df.index)
+        
+        #selected_df[InternalLabel.ATTACK_CATEGORY.value] = dataset[InternalLabel.ATTACK_CATEGORY.value]
+        #selected_df[InternalLabel.TARGET_LABEL.value] = dataset[InternalLabel.TARGET_LABEL.value]
+        selected_df = pd.concat([selected_df, target], axis=1)
         
         return selected_df
 
